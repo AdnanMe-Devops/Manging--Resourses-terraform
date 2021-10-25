@@ -1,0 +1,45 @@
+terraform allows us to safely manage your infrastructure by modifying configuration files. Terraform will show you an execution plan that you must approve before any infrastructure changes are applied. This project highlights several capabilities of Terraform that make managing infrastructure easy. 
+
+ Objectives
+
+
+Import existing resources into Terraform
+Use interpolation syntax to reference resource attributes in configurations
+Use variables to parameterize Terraform configurations
+Understand Terraform's concept of state
+
+Terraform keeps track of the infrastructure it manages by maintaining state. The state information contains what is needed to map between real-world infrastructure and configuration files along with other metadata. By default, the state is stored in a file called terraform.tfstate. To facilitate collaboration, the state can also be stored on a remote server, but this is outside of the scope of this Lab.
+
+When we create resources with Terraform, the state is automatically maintained. But you can also import existing infrastructure so that it can be managed by Terraform. This is useful for migrating your infrastructure management to Terraform and recovering from accidental deletion of a state file. The import command is used to map existing resources into the Terraform state. As of version 0.11.3, the corresponding configuration for the imported resource must be created manually. Future versions will automatically generate a configuration from the imported resource. Many resources can be imported, but not all resources can be imported. Lastly, resources must be imported one at a time, but future versions will support bulk importing.
+
+In this  Step, will use the import command to bring an existing VPC under the control of Terraform and verify its addition to the Terraform state.
+
+Creating an EC2 Instance with Terraform
+
+ will create an EC2 instance inside of the VPC managed by Terraform and will also create subnets as a requirement for creating an EC2 instance in a VPC. 
+
+Interpolation syntax, and
+Implicit dependencies.
+Interpolation syntax allows you to do several things, but what is important in this  is the ability to reference resource attributes in a configuration file. Interpolation is used within strings being assigned argument values in a configuration. The basic syntax for interpolating attribute values is:
+
+
+${resource_type.identifier.attribute}
+Terraform provides an interactive console for experimenting with interpolations before using them in a configuration. You can access the console by running the console command. However, this Lab Step will provide you with the interpolations you need.
+
+A resource that interpolates attribute values from another resource, is said to depend on that other resource. The dependencies create an order for creating and updating resources. Terraform uses interpolation references to determine the dependencies automatically. This is referred to as an implicit dependency. You can explicitly add a depends_on argument for situations where a dependency isn't implicitly captured. 
+HomeTraining LibraryManage AWS Resources with Terraform
+
+
+Using Variables to Generalize Terraform Configuration
+ Another use case of interpolation is accessing input variables. You can define variables in the same configuration file, by passing them as command-line arguments, by entering them interactively when running the apply command, using environment variables, or in variable files. This proj uses a separate variable file because having separate variable files keep the configuration organized and are easy to version control.
+
+we can define strings, numbers, booleans, list, and map variable types. 
+
+
+${var.variable_name}
+At this point it is worth mentioning that a feature of interpolation is that, within the braces, you can you can perform basic mathematical operations use a variety of built-in functions. Built-in functions can concatenate strings, return a specific element in a list, lookup map values, and much more. 
+Terraform also supports output variables. Output variables allow you to have Terraform interpolate and save values after running apply. 
+ 
+
+
+ 
