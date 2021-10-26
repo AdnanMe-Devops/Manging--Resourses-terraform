@@ -1,0 +1,214 @@
+Change into the infra directory which includes a Terraform configuration and initialized working directory:
+
+
+cd infra
+ 
+
+2. List all the files in the directory:
+
+
+ls -A
+
+
+The listing has two entries:
+
+terraform allows you to safely manage your infrastructure by modifying configuration files. Terraform will show you an execution plan that you must approve before any infrastructure changes are applied. This project highlights several capabilities of Terraform that make managing infrastructure easy. 
+
+ Objectives
+
+
+Import existing resources into Terraform
+Use interpolation syntax to reference resource attributes in configurations
+Use variables to parameterize Terraform configurations
+Understand Terraform's concept of state
+
+Terraform keeps track of the infrastructure it manages by maintaining state. The state information contains what is needed to map between real-world infrastructure and configuration files along with other metadata. By default, the state is stored in a file called terraform.tfstate. To facilitate collaboration, the state can also be stored on a remote server, but this is outside of the scope of this Lab.
+
+When you create resources with Terraform, the state is automatically maintained. But you can also import existing infrastructure so that it can be managed by Terraform. This is useful for migrating your infrastructure management to Terraform and recovering from accidental deletion of a state file. The import command is used to map existing resources into the Terraform state. As of version 0.11.3, the corresponding configuration for the imported resource must be created manually. Future versions will automatically generate a configuration from the imported resource. Many resources can be imported, but not all resources can be imported. Lastly, resources must be imported one at a time, but future versions will support bulk importing.
+
+In this  Step, will use the import command to bring an existing VPC under the control of Terraform and verify its addition to the Terraform state.
+
+Creating an EC2 Instance with Terraform
+
+ will create an EC2 instance inside of the VPC managed by Terraform and will also create subnets as a requirement for creating an EC2 instance in a VPC. 
+
+Interpolation syntax, and
+Implicit dependencies.
+Interpolation syntax allows you to do several things, but what is important in this  is the ability to reference resource attributes in a configuration file. Interpolation is used within strings being assigned argument values in a configuration. The basic syntax for interpolating attribute values is:
+
+
+${resource_type.identifier.attribute}
+Terraform provides an interactive console for experimenting with interpolations before using them in a configuration. You can access the console by running the console command. However, this Lab Step will provide you with the interpolations you need.
+
+A resource that interpolates attribute values from another resource, is said to depend on that other resource. The dependencies create an order for creating and updating resources. Terraform uses interpolation references to determine the dependencies automatically. This is referred to as an implicit dependency. You can explicitly add a depends_on argument for situations where a dependency isn't implicitly captured. 
+HomeTraining LibraryManage AWS Resources with Terraform
+
+
+Using Variables to Generalize Terraform Configuration
+ Another use case of interpolation is accessing input variables. You can define variables in the same configuration file, by passing them as command-line arguments, by entering them interactively when running the apply command, using environment variables, or in variable files. This proj uses a separate variable file because having separate variable files keep the configuration organized and are easy to version control.
+
+we can define strings, numbers, booleans, list, and map variable types. 
+
+
+${var.variable_name}
+At this point it is worth mentioning that a feature of interpolation is that, within the braces, you can you can perform basic mathematical operations use a variety of built-in functions. Built-in functions can concatenate strings, return a specific element in a list, lookup map values, and much more. 
+Terraform also supports output variables. Output variables allow you to have Terraform interpolate and save values after running apply. 
+ 
+
+
+ 
+
+
+main.tf: A Terraform configuration file
+.terraform: A directory created by the init command that includes the AWS Terraform provider plugin
+Also, observe that there is no terraform.tfstate file, indicating that Terraform is not currently managing any resources.
+
+ 
+
+3. View the contents of the main.tf configuration file:
+
+more main.tf
+
+
+If not all of the output fits on the terminal at once, press space bar to tell more to display the next page until all the contents have been displayed. The configuration declares the use of the aws provider and an Amazon Virtual Private Cloud (VPC) with a name of Web VPC.
+
+ 
+
+4. Use the AWS command-line interface (CLI) to verify that a VPC with the Name tag set to Web VPC already exists:
+
+
+aws ec2 describe-vpcs --region us-west-2 --filter "Name=tag:Name,Values='Web VPC'"
+
+
+A JavaScript Object Notation (JSON) representation of the VPC is output. 
+ 
+
+5. Import the VPC into Terraform's state
+
+
+terraform import aws_vpc.web_vpc <VpcId>
+where you replace <VpcId> with the value of the VpcId output by the previous command. The value of VpcId will be similar to vpc-abcd1234. The aws_vpc.web_vpc is referred to as the address of the resource and is formed by joining the resource type and identifier of the resource in the configuration file. Output similar to the following is displayed:
+
+
+
+ 
+
+6. List the files in the current directory:
+
+
+ls
+
+
+Terraform has created the terraform.tfstate file to keep track of the resource it has imported.
+
+ 
+
+7. View the contents of the state file:
+
+
+more terraform.tfstate
+
+
+In the middle of the output is the resources property which includes the aws_vpc.web_vpc resource. The primary.attributes property includes all of the attributes Terraform stores for the resource. By keeping the attributes in the state, Terraform doesn't always need to send requests to the provider to query the attribute values. You shouldn't modify the state file directly. When you modify a configuration, Terraform can compare the configuration to the state to determine if any resource needs to be updated.
+
+ 
+
+8. Use the show command to show the attributes in the state file:
+
+
+terraform show
+
+
+ 
+
+9. Show the available state subcommands for working directly with the state:
+
+
+terraform state
+
+
+The state subcommands are mainly for advanced scenarios. If you ever have to work directly with state, you should make use of these subcommands instead of editing the state file.
+
+ 
+
+ 
+
+3. Plan and apply the changes using the apply command:
+
+terraform apply
+
+
+Note that the first action Terraform takes is to Refreshing state. That is so Terraform can detect if the VPC resource has diverged from the desired state described in the configuration. In this case, the actual state matches the desired state for the VPC resource and no changes are required. After that, three resources that will be added are listed. 
+
+ 
+
+4. Enter yes to accept the execution plan, and create the resources:
+
+
+
+ 
+
+5. View the Terraform state file to see that the implicit dependencies have been stored in the state:
+
+
+more terraform.tfstate
+
+
+The depends_on property lists all dependencies of a resource. In the above image, the dependence of the web instance on web_subnet_1 is shown. The graph command visualizes the dependency graph created by all of the dependencies. The graph for the current configuration is as follows:
+
+
+check output in graph
+
+Delete the configuration changes made in the last Step:
+
+
+sed -i '/.*web_subnet_1.*/,$d' main.tf
+This deletes all the lines in the configuration file starting from the line that declares web_subnet_1.
+
+ 
+
+2. Apply the configuration changes to realize the new desired state with the subnets and instance removed, and enter yes when prompted:
+
+
+terraform apply
+
+ 
+
+
+
+
+ 
+
+
+ 
+
+6. View the execution plan by issuing the apply command:
+
+terraform apply
+You can verify some interpolation results in the plan. For example, the availability_zone, cidr_block, and tags.Name of the subnets:
+
+ 
+
+7. Enter yes at the prompt to apply the execution plan to create the resources.
+
+ In the output you can see the instances are created in different subnets:
+
+
+
+The output variables are shown at the end of the output:
+
+
+
+ 
+
+8. Use the output command to retrieve the ips output value:
+
+
+terraform output ips
+
+
+ 
+
+ 
+
+ 
