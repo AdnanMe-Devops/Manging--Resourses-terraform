@@ -1,0 +1,10 @@
+
+5. Create an output variable file called outputs.tf that 
+
+cat > outputs.tf <<'EOF'
+output "ips" {
+  # join all the instance private IPs with commas separating them
+  value = "${join(", ", aws_instance.web.*.private_ip)}"
+}
+EOF
+When you run apply, Terraform loads all files in the directory ending with .tf, so both input and output variable files are loaded.
